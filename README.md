@@ -1,4 +1,4 @@
-:fire: # Fogo Means Fire :fire:
+# :fire: Fogo Means Fire :fire:
 ## A Software Package for Online Gradient Boosted Decision Trees -- Specifically Built for Regression
 
 A lightweight, streaming-compatible implementation of **Online Gradient Boosted Decision Trees (GBDTs)** for regression tasks under **non-stationary data distributions**.  
