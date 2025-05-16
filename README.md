@@ -23,3 +23,7 @@ git clone https://github.com/kennonstewart/fogo.git
 cd online-gbdt-regression
 pip install -e .
 ```
+
+## Acknowledgements
+
+Thanks to Huawei Lin, Jun Woo Chund, Yingjie Lao, and Weijjie Zhao for your paper on Online Gradient Boosted Decision Trees in the Classification problem.
