@@ -24,6 +24,11 @@ cd online-gbdt-regression
 pip install -e .
 ```
 
+## Contributing 
+
+Discussions and pull requests are more than welcome :) 
+Check out the contributing.md file for an explanation on how to contribute.
+
 ## Acknowledgements
 
 Thanks to Huawei Lin, Jun Woo Chund, Yingjie Lao, and Weijjie Zhao for your paper on Online Gradient Boosted Decision Trees in the Classification problem.
