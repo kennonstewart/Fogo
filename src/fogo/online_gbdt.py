@@ -16,7 +16,7 @@ class OnlineGBDT:
     def __init__(self, n_estimators=100, learning_rate=0.1, loss='mse', **kwargs):
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
-        self.trees = List[DecisionTree]
+        self.trees = []
         self.loss = loss
 
     def fit(self, X, y):
