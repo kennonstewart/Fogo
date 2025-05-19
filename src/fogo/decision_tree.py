@@ -2,9 +2,9 @@ import numpy as np
 
 class DecisionTree:
     def __init__(self, max_depth=None, min_samples_split=2, loss=None):
-        self.max_depth = max_depth
-        self.min_samples_split = min_samples_split
-        self.loss = loss if loss is not None else self._mse
+        self.max_depth = max_depth # Maximum depth of the tree
+        self.min_samples_split = min_samples_split # Minimum number of samples required to split an internal node
+        self.loss = loss if loss is not None else self._mse # Loss function, with MSE as the default
         self.tree = None
 
     def fit(self, X, y):
@@ -17,16 +17,22 @@ class DecisionTree:
         return [self._predict(sample, self.tree) for sample in X]
 
     def _build_tree(self, X, y, depth=0):
-        # Stopping criteria
-        if (self.max_depth is not None and depth >= self.max_depth) or len(y) < self.min_samples_split or np.var(y) == 0:
+        # stopping criteria: if the tree exceeds parameters
+        depth_exceeds_max = self.max_depth is not None and depth >= self.max_depth
+        minimum_samples_reached = len(y) < self.min_samples_split
+
+        if depth_exceeds_max or minimum_samples_reached or np.var(y) == 0:
             leaf_value = np.mean(y)
             return TreeNode(value=leaf_value)
 
+        # find the best split
         best_feature, best_threshold, best_gain = self._find_best_split(X, y)
+        
+        # stopping criteria: if there's no information gain 
         if best_gain == 0:
             return TreeNode(value=np.mean(y))
 
-        # Split
+        # perform the split 
         left_idx = X[:, best_feature] <= best_threshold
         right_idx = X[:, best_feature] > best_threshold
         left = self._build_tree(X[left_idx], y[left_idx], depth + 1)
