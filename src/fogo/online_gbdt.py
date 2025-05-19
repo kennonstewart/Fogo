@@ -1,17 +1,4 @@
 class OnlineGBDT:
-    """
-    Online Gradient Boosted Decision Trees.
-
-    Parameters
-    ----------
-    n_estimators : int
-        Number of trees.
-    learning_rate : float
-        Step size shrinkage.
-    loss : callable or str
-        Loss function.
-    ...
-    """
 
     def __init__(self, n_estimators=100, learning_rate=0.1, loss='mse', **kwargs):
         self.n_estimators = n_estimators

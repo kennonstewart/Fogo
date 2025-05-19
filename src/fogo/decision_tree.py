@@ -2,9 +2,9 @@ import numpy as np
 
 class DecisionTree:
     def __init__(self, max_depth=None, min_samples_split=2, loss=None):
-        self.max_depth = max_depth # Maximum depth of the tree
-        self.min_samples_split = min_samples_split # Minimum number of samples required to split an internal node
-        self.loss = loss if loss is not None else self._mse # Loss function, with MSE as the default
+        self.max_depth = max_depth # maximum depth of the tree
+        self.min_samples_split = min_samples_split # minimum number of samples required to split an internal node
+        self.loss = loss if loss is not None else self._mse # loss function, with MSE as the default
         self.tree = None
 
     def fit(self, X, y):
@@ -88,4 +88,3 @@ class TreeNode:
 
     def is_leaf(self):  
         return self.value is not None
-
