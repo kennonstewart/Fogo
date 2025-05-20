@@ -10,21 +10,21 @@ class OnlineGBDT:
         """
         Builds model on a batch of training data.
         """
-        print(f"Fitting model with {len(X)} samples.")
+        print(f"Fitting model with {len(X)} sample(s).")
         # ...implementation...
 
     def fit_one(self, X, y):
         """
         Incrementally fits the model to a singular datapoint.
         """
-        print(f"Fitting model with 1 sample.")
+        print(f"Fitting model with 1 sample(s).")
         # ...implementation...
 
     def predict(self, X):
         """
         Performs prediction for a sample vector of predictors.
         """
-        print(f"Predicting with {len(X)} samples.")
+        print(f"Predicting with {len(X)} sample(s).")
         # ...implementation...
 
     def save(self, filepath):

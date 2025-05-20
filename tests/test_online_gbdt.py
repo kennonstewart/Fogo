@@ -1,5 +1,5 @@
 import numpy as np
-from fogo.online_gbdt import OnlineGBDT
+from src.fogo.online_gbdt import OnlineGBDT
 
 def test_fit_and_predict_batch():
     X = np.random.rand(100, 3)
