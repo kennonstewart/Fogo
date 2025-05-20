@@ -1,3 +1,12 @@
+import os
+print(os.getcwd())
+
+import pickle
+from src.fogo.decision_tree import DecisionTree
+from src.fogo.decision_tree import TreeNode
+import numpy as np
+
+
 class OnlineGBDT:
 
     def __init__(self, n_estimators=100, learning_rate=0.1, loss='mse', **kwargs):
@@ -8,32 +17,65 @@ class OnlineGBDT:
 
     def fit(self, X, y):
         """
-        Builds model on a batch of training data.
+        Builds model on a batch of training data using gradient boosting.
         """
         print(f"Fitting model with {len(X)} sample(s).")
-        # ...implementation...
+        X = np.array(X)
+        y = np.array(y)
+        predictions = np.zeros_like(y, dtype=float)
+        self.trees = []
+        for _ in range(self.n_estimators):
+            residuals = y - predictions
+            tree = DecisionTree(max_depth=3)
+            tree.fit(X, residuals)
+            update = np.array(tree.predict(X))
+            predictions += self.learning_rate * update
+            self.trees.append(tree)
 
     def fit_one(self, X, y):
         """
-        Incrementally fits the model to a singular datapoint.
+        Incrementally fits the model to a single datapoint.
         """
+        from .decision_tree import DecisionTree # why am I importing this internally?
         print(f"Fitting model with 1 sample(s).")
-        # ...implementation...
+        # Ensure X is a single sample (1D feature vector)
+        if not self.trees:
+            initial_tree = DecisionTree(max_depth=3)
+            initial_tree.fit([X], [y])
+            self.trees.append(initial_tree)
+            return 
+
+        pred = sum(self.learning_rate * tree.predict([X])[0] for tree in self.trees)
+        residual = y - pred
+        new_tree = DecisionTree(max_depth=3)
+        new_tree.fit([X], [residual])
+        self.trees.append(new_tree)
 
     def predict(self, X):
         """
         Performs prediction for a sample vector of predictors.
         """
         print(f"Predicting with {len(X)} sample(s).")
-        # ...implementation...
+        X = np.array(X)
+        predictions = np.zeros(X.shape[0], dtype=float)
+        for tree in self.trees:
+            predictions += self.learning_rate * np.array(tree.predict(X))
+        return predictions
 
     def save(self, filepath):
         """Save model to disk."""
         print(f"Saving model to {filepath}.")
-        # ...implementation...
+        with open(filepath, 'wb') as f:
+            import pickle
+            pickle.dump(self, f)
+        print("Model saved successfully.")
 
     @classmethod
     def load(cls, filepath):
         """Load model from disk."""
         print(f"Loading model from {filepath}.")
-        # ...implementation...
+        with open(filepath, 'rb') as f:
+            import pickle
+            model = pickle.load(f)
+        print("Model loaded successfully.")
+        return model

@@ -64,7 +64,7 @@ class DecisionTree:
         gain = np.var(parent) - (weight_left * np.var(left) + weight_right * np.var(right))
         return gain
 
-    def _predict(self, sample, node):
+    def _predict(self, sample, node): # this is moreso a tree traversal than anything else
         if node.is_leaf():
             return node.value
         if sample[node.feature] <= node.threshold:
@@ -86,5 +86,5 @@ class TreeNode:
         self.information_gain = None
         self.prediction_probabilities = None
 
-    def is_leaf(self):  
-        return self.value is not None
+    def is_leaf(self):
+        return self.left is None and self.right is None
