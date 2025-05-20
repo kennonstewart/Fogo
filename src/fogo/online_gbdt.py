@@ -1,9 +1,6 @@
-import os
-print(os.getcwd())
-
 import pickle
-from src.fogo.decision_tree import DecisionTree
-from src.fogo.decision_tree import TreeNode
+from fogo.decision_tree import DecisionTree
+from fogo.decision_tree import TreeNode
 import numpy as np
 
 
@@ -79,3 +76,13 @@ class OnlineGBDT:
             model = pickle.load(f)
         print("Model loaded successfully.")
         return model
+    def delete(self, X, y):
+        """
+        Decrementally unlearns a datapoint or batch from the model.
+        """
+        print(f"Deleting {len(X)} sample(s) from model.")
+        X = np.array(X)
+        y = np.array(y)
+        for tree in self.trees:
+            residuals = y - np.array(tree.predict(X))
+            tree.decrement(X, residuals)

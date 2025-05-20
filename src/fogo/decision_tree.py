@@ -88,3 +88,63 @@ class TreeNode:
 
     def is_leaf(self):
         return self.left is None and self.right is None
+    
+    def decrement(self, X, residuals):
+        """
+        Applies decremental learning by evaluating whether splits need to be changed after data removal.
+        """
+        print("Starting decremental learning.")
+        self._decrement_node(self.tree, X, residuals)
+
+    def _decrement_node(self, node, X, residuals):
+        if node.is_leaf():
+            return
+
+        # Evaluate the current split
+        current_feature = node.feature
+        current_threshold = node.threshold
+
+        left_idx = X[:, current_feature] <= current_threshold
+        right_idx = X[:, current_feature] > current_threshold
+
+        # Compute gain for the current split
+        current_gain = self._information_gain(residuals, residuals[left_idx], residuals[right_idx])
+
+        # Evaluate best new split on same feature
+        best_feature, best_threshold, best_gain = self._find_best_split(X, residuals)
+
+        if best_gain != 0 and (best_feature != current_feature or best_threshold != current_threshold):
+            print(f"Split at node changed from feature {current_feature}, threshold {current_threshold} to feature {best_feature}, threshold {best_threshold}")
+            new_subtree = self._build_tree(X, residuals)
+            node.feature = new_subtree.feature
+            node.threshold = new_subtree.threshold
+            node.left = new_subtree.left
+            node.right = new_subtree.right
+            node.value = new_subtree.value
+        else:
+            self._decrement_node(node.left, X[left_idx], residuals[left_idx])
+            self._decrement_node(node.right, X[right_idx], residuals[right_idx])
+
+    def retrain_subtree(self, node, X, y):
+        """
+        Rebuilds the subtree rooted at the specified node.
+        """
+        print("Retraining subtree.")
+        new_subtree = self._build_tree(X, y)
+        node.feature = new_subtree.feature
+        node.threshold = new_subtree.threshold
+        node.left = new_subtree.left
+        node.right = new_subtree.right
+        node.value = new_subtree.value
+
+    def update_leaf_values(self):
+        """
+        Recomputes prediction values for all terminal nodes.
+        """
+        def _update(node):
+            if node.is_leaf():
+                return
+            _update(node.left)
+            _update(node.right)
+        print("Updating leaf values.")
+        _update(self.tree)
