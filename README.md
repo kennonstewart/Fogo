@@ -1,4 +1,5 @@
 # 🔥 Fogo: Online Gradient Boosted Decision Trees for Regression
+## (Rhymes with Nobu)
 
 **Fogo** is a powerful software package designed to bring **true online learning** to Gradient Boosted Decision Trees (GBDTs). Tailored for **regression** under non-stationary data streams, it offers an efficient and audit-ready solution for edge deployment, privacy compliance, and continuous learning.
 
