@@ -75,6 +75,64 @@ class DecisionTree:
     def _mse(self, y):
         return np.var(y)
 
+    # ------------------------------------------------------------------ #
+    # Decremental learning (machine un‑learning)
+    # ------------------------------------------------------------------ #
+    def decrement(self, X, residuals):
+        """
+        Removes the influence of the given samples from this tree.
+
+        Parameters
+        ----------
+        X : array‑like of shape (n_samples, n_features)
+            Feature vectors of the data to forget.
+        residuals : array‑like of shape (n_samples,)
+            Residual targets associated with the samples to forget.
+            (OnlineGBDT passes y - prediction so we re‑use that signal.)
+        """
+        if self.tree is None:
+            raise ValueError("Tree has not been fitted yet.")
+        X = np.asarray(X)
+        residuals = np.asarray(residuals)
+        self._decrement_node(self.tree, X, residuals)
+
+    def _decrement_node(self, node, X, residuals, depth=0):
+        """
+        Recursively walk the tree, decide whether the current split
+        is still optimal after removing data, and rebuild sub‑trees if not.
+        """
+        if node.is_leaf():
+            # leaf nodes have no split to update
+            return
+
+        cur_feat = node.feature
+        cur_thresh = node.threshold
+
+        left_idx = X[:, cur_feat] <= cur_thresh
+        right_idx = ~left_idx
+
+        # Determine the best split given the *remaining* data
+        best_feat, best_thresh, best_gain = self._find_best_split(X, residuals)
+
+        # If the optimal split has moved, rebuild this sub‑tree
+        if best_gain != 0 and (
+            best_feat != cur_feat or best_thresh != cur_thresh
+        ):
+            # Rebuild children with the new best split
+            node.feature = best_feat
+            node.threshold = best_thresh
+            node.left = self._build_tree(
+                X[left_idx], residuals[left_idx], depth + 1
+            )
+            node.right = self._build_tree(
+                X[right_idx], residuals[right_idx], depth + 1
+            )
+            node.value = None  # internal nodes hold no value
+        else:
+            # recurse
+            self._decrement_node(node.left, X[left_idx], residuals[left_idx], depth + 1)
+            self._decrement_node(node.right, X[right_idx], residuals[right_idx], depth + 1)
+
 
 class TreeNode:
     def __init__(self, feature=None, threshold=None, left=None, right=None, value=None):
@@ -89,62 +147,3 @@ class TreeNode:
     def is_leaf(self):
         return self.left is None and self.right is None
     
-    def decrement(self, X, residuals):
-        """
-        Applies decremental learning by evaluating whether splits need to be changed after data removal.
-        """
-        print("Starting decremental learning.")
-        self._decrement_node(self.tree, X, residuals)
-
-    def _decrement_node(self, node, X, residuals):
-        if node.is_leaf():
-            return
-
-        # Evaluate the current split
-        current_feature = node.feature
-        current_threshold = node.threshold
-
-        left_idx = X[:, current_feature] <= current_threshold
-        right_idx = X[:, current_feature] > current_threshold
-
-        # Compute gain for the current split
-        current_gain = self._information_gain(residuals, residuals[left_idx], residuals[right_idx])
-
-        # Evaluate best new split on same feature
-        best_feature, best_threshold, best_gain = self._find_best_split(X, residuals)
-
-        if best_gain != 0 and (best_feature != current_feature or best_threshold != current_threshold):
-            print(f"Split at node changed from feature {current_feature}, threshold {current_threshold} to feature {best_feature}, threshold {best_threshold}")
-            new_subtree = self._build_tree(X, residuals)
-            node.feature = new_subtree.feature
-            node.threshold = new_subtree.threshold
-            node.left = new_subtree.left
-            node.right = new_subtree.right
-            node.value = new_subtree.value
-        else:
-            self._decrement_node(node.left, X[left_idx], residuals[left_idx])
-            self._decrement_node(node.right, X[right_idx], residuals[right_idx])
-
-    def retrain_subtree(self, node, X, y):
-        """
-        Rebuilds the subtree rooted at the specified node.
-        """
-        print("Retraining subtree.")
-        new_subtree = self._build_tree(X, y)
-        node.feature = new_subtree.feature
-        node.threshold = new_subtree.threshold
-        node.left = new_subtree.left
-        node.right = new_subtree.right
-        node.value = new_subtree.value
-
-    def update_leaf_values(self):
-        """
-        Recomputes prediction values for all terminal nodes.
-        """
-        def _update(node):
-            if node.is_leaf():
-                return
-            _update(node.left)
-            _update(node.right)
-        print("Updating leaf values.")
-        _update(self.tree)
