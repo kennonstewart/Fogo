@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.fogo.online_gbdt import OnlineGBDT
+from fogo.online_gbdt import DecisionTree
 
 @pytest.fixture
 def small_dataset():
@@ -29,7 +29,7 @@ def test_increment_and_decrement(small_dataset):
     X_init, y_init, X_inc, y_inc, X_del, y_del = small_dataset
 
     # ---- initial batch fit -------------------------------------------------
-    model = OnlineGBDT(n_estimators=3, learning_rate=0.1)
+    model = DecisionTree(n_estimators=3, learning_rate=0.1)
     model.fit(X_init, y_init)
     preds_after_fit = model.predict(X_init)
 
