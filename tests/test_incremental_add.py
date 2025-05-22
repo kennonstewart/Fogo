@@ -24,6 +24,7 @@ def test_incremental_add():
         X_new = rng.uniform(0, 1, size=(1, 1))
         y_new = 2 * X_new.squeeze() + rng.normal(0, 0.05, 1)  # linear with noise
         model.fit(X_new, y_new)
+        
     # Check that the model's predictions on the new data are consistent with the old data
     assert np.allclose(model.predict(X_new), model.predict(X_new)), "Model predictions on new data are inconsistent"
     # Check that the model's predictions on the old data are consistent with the new data
