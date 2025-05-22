@@ -146,3 +146,172 @@ class DecisionTree:
             # recurse
             self._decrement_node(node.left, X[left_idx], residuals[left_idx], depth + 1)
             self._decrement_node(node.right, X[right_idx], residuals[right_idx], depth + 1)
+
+class OnlineGBDT:
+    def __init__(self, n_estimators=100, learning_rate=0.1, max_depth=3, min_samples_split=2):
+        self.n_estimators = n_estimators
+        self.learning_rate = learning_rate
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.trees = []
+
+    # ------------------------------------------------------------------ #
+    # Batch training (classic gradient boosting)
+    # ------------------------------------------------------------------ #
+    def fit(self, X, y):
+        """
+        Fit an ensemble of decision‑trees on the initial batch.
+        Standard gradient‑boosting: each tree trains on the residuals
+        left by its predecessors.
+
+        Parameters
+        ----------
+        X : array‑like of shape (n_samples, n_features)
+        y : array‑like of shape (n_samples,)
+        """
+        X = np.asarray(X)
+        y = np.asarray(y, dtype=float)
+
+        n_samples = X.shape[0]
+        # Start with zero prediction
+        pred = np.zeros(n_samples, dtype=float)
+        self.trees = []
+
+        for _ in range(self.n_estimators):
+            residuals = y - pred
+            tree = DecisionTree(
+                max_depth=self.max_depth,
+                min_samples_split=self.min_samples_split,
+            )
+            tree.fit(X, residuals)
+
+            update = np.array(tree.predict(X))
+            pred += self.learning_rate * update
+            self.trees.append(tree)
+
+    # ------------------------------------------------------------------ #
+    # Ensemble prediction
+    # ------------------------------------------------------------------ #
+    def predict(self, X):
+        """
+        Sum the (learning‑rate‑scaled) predictions of all trees.
+        """
+        X = np.asarray(X)
+        if not self.trees:
+            raise ValueError("Model has no trees. Call `fit` first.")
+        agg = np.zeros(X.shape[0], dtype=float)
+        for tree in self.trees:
+            agg += self.learning_rate * np.array(tree.predict(X))
+        return agg
+
+    # ------------------------------------------------------------------ #
+    # Incremental update: in‑place learning for a single sample
+    # ------------------------------------------------------------------ #
+    def fit_one(self, x, y):
+        """
+        Incrementally update the existing ensemble **in‑place** without
+        adding new trees.  We traverse every tree, find the leaf reached
+        by the sample, and nudge its prediction toward the new target.
+
+        Parameters
+        ----------
+        x : array‑like of shape (n_features,)  or (1, n_features)
+        y : float or int
+        """
+        x = np.asarray(x).reshape(1, -1)
+        y = float(y)
+
+        # Current ensemble prediction
+        current_pred = self.predict(x)[0]
+        residual = y - current_pred
+
+        # Distribute the residual across trees (simple shrinkage)
+        step = (self.learning_rate * residual) / len(self.trees)
+
+        for tree in self.trees:
+            leaf = self._find_leaf(tree.tree, x[0])
+            # Update leaf value in‑place
+            leaf.value += step
+    
+    def decrement(self, x, residual):
+        """
+        Remove the influence of a single sample from the ensemble.
+
+        Parameters
+        ----------
+        x : array‑like of shape (n_features,)  or (1, n_features)
+        residual : float or int
+            The residual target associated with the sample to forget.
+            (OnlineGBDT passes y - prediction so we re‑use that signal.)
+        """
+        x = np.asarray(x).reshape(1, -1)
+        residual = float(residual)
+
+        for tree in self.trees:
+            leaf = self._find_leaf(tree.tree, x[0])
+            # Update leaf value in‑place
+            leaf.value -= residual
+            # Rebuild the tree if necessary
+            if leaf.value == 0:
+                # If the leaf value is zero, we need to rebuild the tree
+                # This is a simplified version; in practice, you might want
+                # to handle this differently.
+                self._decrement_node(tree.tree, x[0], residual)
+                # Rebuild the tree
+                tree.fit(x, np.array([residual]))
+                # Reset the leaf value
+                leaf.value = np.mean(residual)
+                # Note: This is a simplified approach. In practice, you might
+                # want to handle this differently, especially if the tree
+                # structure changes significantly.
+    def _decrement_node(self, node, x_row, residual):
+        """
+        Recursively walk the tree, decide whether the current split
+        is still optimal after removing data, and rebuild sub‑trees if not.
+        """
+        if node.is_leaf():
+            # leaf nodes have no split to update
+            return
+
+        cur_feat = node.feature
+        cur_thresh = node.threshold
+
+        if x_row[cur_feat] <= cur_thresh:
+            self._decrement_node(node.left, x_row, residual)
+        else:
+            self._decrement_node(node.right, x_row, residual)
+        # Determine the best split given the *remaining* data
+        best_feat, best_thresh, best_gain = self._find_best_split(x_row, residual)
+        # If the optimal split has moved, rebuild this sub‑tree
+        if best_gain != 0 and (
+            best_feat != cur_feat or best_thresh != cur_thresh
+        ):
+            # Rebuild children with the new best split
+            node.feature = best_feat
+            node.threshold = best_thresh
+            node.left = self._build_tree(
+                x_row, residual, depth=1
+            )
+            node.right = self._build_tree(
+                x_row, residual, depth=1
+            )
+            node.value = None
+        else:
+            # recurse
+            self._decrement_node(node.left, x_row, residual)
+            self._decrement_node(node.right, x_row, residual)
+        # Note: This is a simplified approach. In practice, you might
+        # want to handle this differently, especially if the tree
+        # structure changes significantly.
+
+    # Helper ------------------------------------------------------------ #
+    def _find_leaf(self, node, x_row):
+        """
+        Follow the decision path for x_row and return the leaf node object.
+        """
+        if node.is_leaf():
+            return node
+        if x_row[node.feature] <= node.threshold:
+            return self._find_leaf(node.left, x_row)
+        else:
+            return self._find_leaf(node.right, x_row)
