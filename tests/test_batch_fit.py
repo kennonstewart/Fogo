@@ -49,6 +49,9 @@ def test_batch_fit_enhanced():
     y_sin = np.sin(X_sin).squeeze() + rng.normal(0, 0.1, 50)
 
     for X, y in [(X_lin, y_lin), (X_sin, y_sin)]:
+        # log the dataset type
+        dataset_type = "linear" if np.all(np.abs(np.diff(y)) < 0.1) else "sine"
+        print(f"Testing batch fit on {dataset_type} dataset with {len(y)} samples...")
         model = OnlineGBDT(n_estimators=5, learning_rate=0.1, random_state=0)
         model.fit(X, y)
 
