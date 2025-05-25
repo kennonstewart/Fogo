@@ -1,6 +1,5 @@
 from src.fogo.online_gbdt import OnlineGBDT
 import numpy as np
-import pytest
 
 def test_incremental_delete():
     """

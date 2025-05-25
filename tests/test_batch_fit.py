@@ -1,6 +1,4 @@
 import numpy as np
-import pytest
-
 from src.fogo.online_gbdt import OnlineGBDT
 
 def test_batch_fit_small_dataset():
