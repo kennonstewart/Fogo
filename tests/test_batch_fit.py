@@ -49,7 +49,7 @@ def test_batch_fit_enhanced():
     y_sin = np.sin(X_sin).squeeze() + rng.normal(0, 0.1, 50)
 
     for X, y in [(X_lin, y_lin), (X_sin, y_sin)]:
-        model = OnlineGBDT(n_estimators=5, learning_rate=0.1, random_state=0)
+        model = OnlineGBDT(n_estimators=5, learning_rate=0.1)
         model.fit(X, y)
 
         preds = model.predict(X)
