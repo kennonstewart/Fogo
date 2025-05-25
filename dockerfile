@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy files
-COPY src/ /app/
+COPY /app/
 COPY pyproject.toml requirements.txt /app/
 
 # Install package in editable mode
