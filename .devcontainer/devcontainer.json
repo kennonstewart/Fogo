@@ -1,0 +1,17 @@
+{
+  "name": "Fogo Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-toolsai.jupyter",
+    "ms-azuretools.vscode-docker"
+  ],
+  "postCreateCommand": "pip install -e /app && pytest",
+  "forwardPorts": [],
+  "remoteUser": "vscode"
+}
