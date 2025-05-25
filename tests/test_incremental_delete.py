@@ -22,7 +22,7 @@ def test_incremental_delete():
     for i in range(10):
         X_delete = X[i:i+1]
         y_delete = y[i:i+1]
-        model.delete(X_delete, y_delete)
+        model.decrement(X_delete, y_delete)
 
     # Check that the model's predictions on the remaining data are consistent
     assert np.all(np.isfinite(model.predict(X))), "Predictions contain non-finite values after deletion"
