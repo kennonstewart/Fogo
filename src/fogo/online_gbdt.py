@@ -148,11 +148,28 @@ class DecisionTree:
             self._decrement_node(node.right, X[right_idx], residuals[right_idx], depth + 1)
 
 class OnlineGBDT:
-    def __init__(self, n_estimators=100, learning_rate=0.1, max_depth=3, min_samples_split=2):
+    def __init__(self, n_estimators=100, learning_rate=0.1, max_depth=3, min_samples_split=2, random_state = None):
+        """
+        Initialize the Online Gradient Boosting Decision Tree (GBDT) model.
+        Parameters
+        ----------
+        n_estimators : int, default=100
+            The number of trees in the ensemble.
+        learning_rate : float, default=0.1
+            The learning rate shrinks the contribution of each tree.
+        max_depth : int, default=3
+            The maximum depth of the individual trees.
+        min_samples_split : int, default=2
+            The minimum number of samples required to split an internal node.
+        random_state : int, optional
+            Controls the randomness of the estimator. Pass an int for reproducible results across multiple function calls.
+        """
+
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
+        self.random_state = None
         self.trees = []
 
     # ------------------------------------------------------------------ #
