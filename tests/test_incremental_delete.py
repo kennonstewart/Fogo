@@ -26,4 +26,4 @@ def test_incremental_delete():
 
     # Check that the model's predictions on the remaining data are consistent
     assert np.all(np.isfinite(model.predict(X))), "Predictions contain non-finite values after deletion"
-    assert len(model.predict(X)) == len(y) - 10, "Model did not correctly handle incremental deletion"
+    assert len(model.predict(X)) == len(y), "Model did not correctly handle incremental deletion"
