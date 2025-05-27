@@ -1,5 +1,5 @@
 # Dockerfile
-FROM python:3.10-slim
+FROM mcr.microsoft.com/devcontainers/python:0-3.10
 
 # Install basic utilities and dependencies
 RUN apt-get update && apt-get install -y \
@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy files
-COPY /app/
-COPY pyproject.toml requirements.txt /app/
+COPY . .
+COPY pyproject.toml requirements.txt /app
 
 # Install package in editable mode
 RUN pip install --upgrade pip && pip install -e /app
