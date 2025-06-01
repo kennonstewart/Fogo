@@ -1,27 +1,38 @@
 .
-├── README.md
-├── cheat.txt
-├── data
-├── dockerfile
-├── paper
-├── pyproject.toml
-├── requirements.txt
-├── sandbox
-│   └── tree_playground.py
-├── src
-│   └── fogo
-│       ├── online_gbdt.py
-│       └── utils.py
-├── structure.txt
-└── tests
-    ├── __init__.py
-    ├── test_batch_fit.py
-    ├── test_deleting_nonpresent_sample.py
-    ├── test_incremental_add.py
-    ├── test_incremental_delete.py
-    ├── test_lifecycle.py
-    ├── test_multifeature_input.py
-    ├── test_round_trip_persistence.py
-    └── test_single_sample_batch.py
+├── ./README.md
+├── ./notebooks
+│   └── ./notebooks/online_gbdt_demo.ipynb
+├── ./src
+│   └── ./src/fogo
+│       ├── ./src/fogo/__pycache__
+│       │   ├── ./src/fogo/__pycache__/decision_tree.cpython-312.pyc
+│       │   ├── ./src/fogo/__pycache__/online_gbdt.cpython-310.pyc
+│       │   └── ./src/fogo/__pycache__/online_gbdt.cpython-312.pyc
+│       ├── ./src/fogo/online_gbdt.py
+│       └── ./src/fogo/utils.py
+├── ./structure.txt
+└── ./tests
+    ├── ./tests/__init__.py
+    ├── ./tests/__pycache__
+    │   ├── ./tests/__pycache__/__init__.cpython-312.pyc
+    │   ├── ./tests/__pycache__/test_batch_fit.cpython-312-pytest-8.3.5.pyc
+    │   ├── ./tests/__pycache__/test_decision_tree.cpython-312-pytest-8.3.5.pyc
+    │   ├── ./tests/__pycache__/test_deleting_nonpresent_sample.cpython-312-pytest-8.3.5.pyc
+    │   ├── ./tests/__pycache__/test_increment.cpython-312-pytest-8.3.5.pyc
+    │   ├── ./tests/__pycache__/test_incremental_add.cpython-312-pytest-8.3.5.pyc
+    │   ├── ./tests/__pycache__/test_incremental_delete.cpython-312-pytest-8.3.5.pyc
+    │   ├── ./tests/__pycache__/test_lifecycle.cpython-312-pytest-8.3.5.pyc
+    │   ├── ./tests/__pycache__/test_multifeature_input.cpython-312-pytest-8.3.5.pyc
+    │   ├── ./tests/__pycache__/test_online_gbdt.cpython-312-pytest-8.3.5.pyc
+    │   ├── ./tests/__pycache__/test_round_trip_persistence.cpython-312-pytest-8.3.5.pyc
+    │   └── ./tests/__pycache__/test_single_sample_batch.cpython-312-pytest-8.3.5.pyc
+    ├── ./tests/test_batch_fit.py
+    ├── ./tests/test_deleting_nonpresent_sample.py
+    ├── ./tests/test_incremental_add.py
+    ├── ./tests/test_incremental_delete.py
+    ├── ./tests/test_lifecycle.py
+    ├── ./tests/test_multifeature_input.py
+    ├── ./tests/test_round_trip_persistence.py
+    └── ./tests/test_single_sample_batch.py
 
-6 directories, 18 files
+6 directories, 29 files

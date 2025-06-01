@@ -5,15 +5,13 @@ FROM mcr.microsoft.com/devcontainers/python:0-3.10
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \
+    npm \ 
     && rm -rf /var/lib/apt/lists/*
 
-# Set work directory
 WORKDIR /app
 
-# Copy files
-COPY . .
-COPY pyproject.toml requirements.txt /app
-
+COPY ../pyproject.toml ../README.md ./
+COPY ../src/ ./src/
 # Install package in editable mode
 RUN pip install --upgrade pip && pip install -e /app
 
