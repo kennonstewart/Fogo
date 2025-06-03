@@ -27,13 +27,18 @@ Fogo supports **decremental updates**—remove the influence of a data point fro
 
 ---
 
-## 📦 Installation
+## 📦 Recommended Steps for Environment Setup
 
 ```bash
-git clone https://github.com/kennonstewart/fogo.git
-cd fogo
+# Recommended setup
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e .
+pip install ipykernel
+python -m ipykernel install --user --name fogo-kernel --display-name "Python (Fogo)"
 ```
+
+
 
 ---
 
