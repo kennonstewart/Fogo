@@ -13,7 +13,7 @@ WORKDIR /app
 COPY ../pyproject.toml ../README.md ./
 COPY ../src/ ./src/
 # Install package in editable mode
-RUN pip install --upgrade pip && pip install -e /app
+RUN pip install --upgrade pip && pip install -e .
 
 # Default command
 CMD ["python"]
