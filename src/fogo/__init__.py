@@ -1,0 +1,1 @@
+# Makes fogo a package

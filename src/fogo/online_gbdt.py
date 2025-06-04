@@ -89,9 +89,6 @@ class DecisionTree:
         else:
             return self._predict_one(x, node.right)
 
-    # ------------------------------------------------------------------ #
-    # Decremental learning (machine un‑learning)
-    # ------------------------------------------------------------------ #
     def decrement(self, X, residuals):
         """
         Removes the influence of the given samples from this tree.
@@ -111,10 +108,6 @@ class DecisionTree:
         self._decrement_node(self.tree, X, residuals)
 
     def _decrement_node(self, node, X, residuals, depth=0):
-        """
-        Recursively walk the tree, decide whether the current split
-        is still optimal after removing data, and rebuild sub‑trees if not.
-        """
         if node.is_leaf():
             # leaf nodes have no split to update
             return
@@ -148,6 +141,7 @@ class DecisionTree:
             self._decrement_node(node.right, X[right_idx], residuals[right_idx], depth + 1)
 
 class OnlineGBDT:
+
     def __init__(self, n_estimators=100, learning_rate=0.1, max_depth=3, min_samples_split=2, random_state = None):
         """
         Initialize the Online Gradient Boosting Decision Tree (GBDT) model.
@@ -172,9 +166,27 @@ class OnlineGBDT:
         self.random_state = None
         self.trees = []
 
-    # ------------------------------------------------------------------ #
-    # Batch training (classic gradient boosting)
-    # ------------------------------------------------------------------ #
+
+    def set_params(self, **params):
+        """
+        Set the parameters of this estimator. Compatible with scikit-learn's API.
+        Parameters
+        ----------
+        **params : dict
+            Estimator parameters.
+        Returns
+        -------
+        self : object
+            Estimator instance.
+        """
+        for key, value in params.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                raise ValueError(f"Invalid parameter {key} for OnlineGBDT.")
+        return self
+
+
     def fit(self, X, y):
         """
         Fit an ensemble of decision‑trees on the initial batch.
@@ -206,9 +218,6 @@ class OnlineGBDT:
             pred += self.learning_rate * update
             self.trees.append(tree)
 
-    # ------------------------------------------------------------------ #
-    # Ensemble prediction
-    # ------------------------------------------------------------------ #
     def predict(self, X):
         """
         Sum the (learning‑rate‑scaled) predictions of all trees.
@@ -221,9 +230,7 @@ class OnlineGBDT:
             agg += self.learning_rate * np.array(tree.predict(X))
         return agg
 
-    # ------------------------------------------------------------------ #
-    # Incremental update: in‑place learning for a single sample
-    # ------------------------------------------------------------------ #
+
     def fit_one(self, x, y):
         """
         Incrementally update the existing ensemble **in‑place** without
@@ -281,6 +288,40 @@ class OnlineGBDT:
                 # Note: This is a simplified approach. In practice, you might
                 # want to handle this differently, especially if the tree
                 # structure changes significantly.
+
+    def score(self, X, y):
+        """
+        Compute the coefficient of determination R^2 manually.
+        """
+        y = np.asarray(y)
+        y_pred = self.predict(X)
+        ss_res = np.sum((y - y_pred) ** 2)
+        ss_tot = np.sum((y - np.mean(y)) ** 2)
+        return 1 - ss_res / ss_tot
+
+    def get_params(self, deep=True):
+        """
+        Return estimator parameters as a dict. Required for scikit-learn compatibility.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : dict
+            Parameter names mapped to their values.
+        """
+        return {
+            "n_estimators": self.n_estimators,
+            "learning_rate": self.learning_rate,
+            "max_depth": self.max_depth,
+            "min_samples_split": self.min_samples_split,
+            "random_state": self.random_state,
+        }
+
     def _decrement_node(self, node, x_row, residual):
         """
         Recursively walk the tree, decide whether the current split
@@ -321,7 +362,6 @@ class OnlineGBDT:
         # want to handle this differently, especially if the tree
         # structure changes significantly.
 
-    # Helper ------------------------------------------------------------ #
     def _find_leaf(self, node, x_row):
         """
         Follow the decision path for x_row and return the leaf node object.
