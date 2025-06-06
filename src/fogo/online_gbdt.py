@@ -163,7 +163,7 @@ class OnlineGBDT:
         self.learning_rate = learning_rate
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
-        self.random_state = None
+        self.random_state = random_state
         self.trees = []
 
 
@@ -275,19 +275,10 @@ class OnlineGBDT:
             leaf = self._find_leaf(tree.tree, x[0])
             # Update leaf value in‑place
             leaf.value -= residual
-            # Rebuild the tree if necessary
+            # If the leaf value is now zero, update the tree structure
+            # using the DecisionTree's decrement logic.
             if leaf.value == 0:
-                # If the leaf value is zero, we need to rebuild the tree
-                # This is a simplified version; in practice, you might want
-                # to handle this differently.
-                self._decrement_node(tree.tree, x[0], residual)
-                # Rebuild the tree
-                tree.fit(x, np.array([residual]))
-                # Reset the leaf value
-                leaf.value = np.mean(residual)
-                # Note: This is a simplified approach. In practice, you might
-                # want to handle this differently, especially if the tree
-                # structure changes significantly.
+                tree.decrement(x, np.array([residual]))
 
     def score(self, X, y):
         """
@@ -322,45 +313,6 @@ class OnlineGBDT:
             "random_state": self.random_state,
         }
 
-    def _decrement_node(self, node, x_row, residual):
-        """
-        Recursively walk the tree, decide whether the current split
-        is still optimal after removing data, and rebuild sub‑trees if not.
-        """
-        if node.is_leaf():
-            # leaf nodes have no split to update
-            return
-
-        cur_feat = node.feature
-        cur_thresh = node.threshold
-
-        if x_row[cur_feat] <= cur_thresh:
-            self._decrement_node(node.left, x_row, residual)
-        else:
-            self._decrement_node(node.right, x_row, residual)
-        # Determine the best split given the *remaining* data
-        best_feat, best_thresh, best_gain = self._find_best_split(x_row, residual)
-        # If the optimal split has moved, rebuild this sub‑tree
-        if best_gain != 0 and (
-            best_feat != cur_feat or best_thresh != cur_thresh
-        ):
-            # Rebuild children with the new best split
-            node.feature = best_feat
-            node.threshold = best_thresh
-            node.left = self._build_tree(
-                x_row, residual, depth=1
-            )
-            node.right = self._build_tree(
-                x_row, residual, depth=1
-            )
-            node.value = None
-        else:
-            # recurse
-            self._decrement_node(node.left, x_row, residual)
-            self._decrement_node(node.right, x_row, residual)
-        # Note: This is a simplified approach. In practice, you might
-        # want to handle this differently, especially if the tree
-        # structure changes significantly.
 
     def _find_leaf(self, node, x_row):
         """
