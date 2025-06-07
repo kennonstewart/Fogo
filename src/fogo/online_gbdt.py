@@ -55,7 +55,7 @@ class DecisionTree:
             for threshold in thresholds:
                 left_idx = X[:, feature] <= threshold
                 right_idx = ~left_idx
-                if len(y[left_idx]) == 0 or len(y[right_idx]) == 0:
+                if len(y[left_idx]) == 0 or len(y[right_idx]) == 0: # edge case: no samples
                     continue
                 mse_left = self._mse(y[left_idx])
                 mse_right = self._mse(y[right_idx])
@@ -91,17 +91,6 @@ class DecisionTree:
             return self._predict_one(x, node.right)
 
     def update_leaf(self, x, target, lr=1.0):
-        """Incrementally update the leaf reached by ``x``.
-
-        Parameters
-        ----------
-        x : array-like of shape (n_features,)
-            The input sample.
-        target : float
-            The desired leaf value.
-        lr : float, default=1.0
-            Update step size.
-        """
         x = np.asarray(x)
         if self.tree is None:
             # initialise a single leaf tree
@@ -186,7 +175,7 @@ class OnlineGBDT:
         eta=0.1,
         B=1.0,
         loss_grad_fn=None,
-        mode="residual",
+        mode="beygelzimer",
     ):
         """
         Initialize the Online Gradient Boosting Decision Tree (GBDT) model.
@@ -244,13 +233,6 @@ class OnlineGBDT:
 
 
     def fit(self, X, y):
-        """
-        Fit the model on a batch of data.
-
-        If ``mode`` is ``"beygelzimer"`` the data is processed one sample at a
-        time using the online gradient boosting algorithm.  Otherwise the
-        classic residual boosting procedure is used.
-        """
         X = np.asarray(X)
         y = np.asarray(y, dtype=float)
 
