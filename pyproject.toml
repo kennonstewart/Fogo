@@ -54,14 +54,6 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
-# Optional URLs
-urls = {
-  "Homepage" = "https://secondstreetlabs.io/fogo",
-  "Documentation" = "https://secondstreetlabs.io/fogo/docs",
-  "Repository" = "https://github.com/secondstreetlabs/fogo",
-  "Issues" = "https://github.com/secondstreetlabs/fogo/issues"
-}
-
 [tool.setuptools]
 package-dir = { "" = "src" }
 
@@ -75,4 +67,3 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-pythonpath = ["src"]
