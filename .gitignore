@@ -2,3 +2,5 @@ cheat.txt
 sandbox/
 .venv/
 src/fogo.egg-info/
+*.egg-info/
+__pycache__/
