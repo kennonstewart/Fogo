@@ -22,6 +22,7 @@ class DecisionTree:
         X = np.asarray(X)
         y = np.asarray(y)
         self.tree = self._build_tree(X, y, depth=0)
+        self.root = self.tree
 
     def _build_tree(self, X, y, depth):
         n_samples, n_features = X.shape
@@ -89,6 +90,38 @@ class DecisionTree:
         else:
             return self._predict_one(x, node.right)
 
+    def update_leaf(self, x, target, lr=1.0):
+        """Incrementally update the leaf reached by ``x``.
+
+        Parameters
+        ----------
+        x : array-like of shape (n_features,)
+            The input sample.
+        target : float
+            The desired leaf value.
+        lr : float, default=1.0
+            Update step size.
+        """
+        x = np.asarray(x)
+        if self.tree is None:
+            # initialise a single leaf tree
+            self.tree = TreeNode(value=float(target))
+            return
+
+        leaf = self._predict_leaf_node(self.tree, x)
+        if leaf.value is None:
+            leaf.value = float(target)
+        else:
+            leaf.value += lr * (float(target) - leaf.value)
+
+    def _predict_leaf_node(self, node, x):
+        """Return the leaf ``TreeNode`` reached by ``x``."""
+        if node.is_leaf():
+            return node
+        if x[node.feature] <= node.threshold:
+            return self._predict_leaf_node(node.left, x)
+        return self._predict_leaf_node(node.right, x)
+
     def decrement(self, X, residuals):
         """
         Removes the influence of the given samples from this tree.
@@ -142,7 +175,19 @@ class DecisionTree:
 
 class OnlineGBDT:
 
-    def __init__(self, n_estimators=100, learning_rate=0.1, max_depth=3, min_samples_split=2, random_state = None):
+    def __init__(
+        self,
+        n_estimators=100,
+        learning_rate=0.1,
+        max_depth=3,
+        min_samples_split=2,
+        random_state=None,
+        *,
+        eta=0.1,
+        B=1.0,
+        loss_grad_fn=None,
+        mode="residual",
+    ):
         """
         Initialize the Online Gradient Boosting Decision Tree (GBDT) model.
         Parameters
@@ -163,8 +208,19 @@ class OnlineGBDT:
         self.learning_rate = learning_rate
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
-        self.random_state = None
+        self.random_state = random_state
+
+        self.mode = mode
+        self.eta = eta
+        self.B = B
+        self.L_B = 2 * B
+        self.loss_grad_fn = loss_grad_fn or (lambda y_true, y_pred: 2.0 * (y_pred - y_true))
+
+        # ensemble containers
         self.trees = []
+        self.models = [DecisionTree(max_depth=self.max_depth, min_samples_split=self.min_samples_split) for _ in range(self.n_estimators)]
+        self.shrinkages = [0.0 for _ in range(self.n_estimators)]
+        self.t = 1
 
 
     def set_params(self, **params):
@@ -189,20 +245,21 @@ class OnlineGBDT:
 
     def fit(self, X, y):
         """
-        Fit an ensemble of decision‑trees on the initial batch.
-        Standard gradient‑boosting: each tree trains on the residuals
-        left by its predecessors.
+        Fit the model on a batch of data.
 
-        Parameters
-        ----------
-        X : array‑like of shape (n_samples, n_features)
-        y : array‑like of shape (n_samples,)
+        If ``mode`` is ``"beygelzimer"`` the data is processed one sample at a
+        time using the online gradient boosting algorithm.  Otherwise the
+        classic residual boosting procedure is used.
         """
         X = np.asarray(X)
         y = np.asarray(y, dtype=float)
 
+        if self.mode == "beygelzimer":
+            for x_row, y_val in zip(X, y):
+                self._update_beygelzimer(x_row, y_val)
+            return self
+
         n_samples = X.shape[0]
-        # Start with zero prediction
         pred = np.zeros(n_samples, dtype=float)
         self.trees = []
 
@@ -215,19 +272,28 @@ class OnlineGBDT:
             tree.fit(X, residuals)
 
             update = np.array(tree.predict(X))
-            pred += self.learning_rate * update
+            pred += update
             self.trees.append(tree)
 
+        return self
+
     def predict(self, X):
-        """
-        Sum the (learning‑rate‑scaled) predictions of all trees.
-        """
+        """Predict targets for ``X``."""
         X = np.asarray(X)
+
+        if self.mode == "beygelzimer":
+            preds = np.zeros(X.shape[0], dtype=float)
+            for i, model in enumerate(self.models):
+                if model.tree is None:
+                    continue
+                preds += self.shrinkages[i] * np.array(model.predict(X))
+            return preds
+
         if not self.trees:
             raise ValueError("Model has no trees. Call `fit` first.")
         agg = np.zeros(X.shape[0], dtype=float)
         for tree in self.trees:
-            agg += self.learning_rate * np.array(tree.predict(X))
+            agg += np.array(tree.predict(X))
         return agg
 
 
@@ -245,17 +311,53 @@ class OnlineGBDT:
         x = np.asarray(x).reshape(1, -1)
         y = float(y)
 
+        if self.mode == "beygelzimer":
+            self._update_beygelzimer(x[0], y)
+            return
+
         # Current ensemble prediction
         current_pred = self.predict(x)[0]
         residual = y - current_pred
 
-        # Distribute the residual across trees (simple shrinkage)
-        step = (self.learning_rate * residual) / len(self.trees)
+        step = residual / len(self.trees)
 
         for tree in self.trees:
             leaf = self._find_leaf(tree.tree, x[0])
-            # Update leaf value in‑place
             leaf.value += step
+
+    # ------------------------------------------------------------------
+    # Beygelzimer online gradient boosting helpers
+    # ------------------------------------------------------------------
+
+    def _update_beygelzimer(self, x, y):
+        """Single-sample update following Beygelzimer et al."""
+        x = np.asarray(x)
+
+        # current prediction using existing shrinkages
+        pred = 0.0
+        for w, model in zip(self.shrinkages, self.models):
+            if model.tree is not None:
+                pred += w * model.predict(x.reshape(1, -1))[0]
+
+        # sequentially update each learner
+        running_pred = pred
+        for i, model in enumerate(self.models):
+            grad = self.loss_grad_fn(y, running_pred)
+            surrogate = -grad / self.L_B
+            model.update_leaf(x, surrogate, lr=self.learning_rate)
+
+            # new prediction from this learner
+            if model.tree is not None:
+                h_val = model.predict(x.reshape(1, -1))[0]
+            else:
+                h_val = surrogate
+
+            # update shrinkage weight
+            self.shrinkages[i] -= self.eta * grad * h_val
+            self.shrinkages[i] = float(np.clip(self.shrinkages[i], -self.B, self.B))
+
+            running_pred += self.shrinkages[i] * h_val
+        self.t += 1
     
     def decrement(self, x, residual):
         """
