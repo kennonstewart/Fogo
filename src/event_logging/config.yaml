@@ -35,7 +35,7 @@ handlers:
 # 3️⃣ Named logger (your code)
 # --------------------------------
 loggers:
-  "hessian_based":
+  "__main__":
     level: DEBUG                      # let DEBUG flow
     handlers: [events]                # always land in events.jsonl
     propagate: True                   # bubble up to root as well
