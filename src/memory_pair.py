@@ -1,5 +1,8 @@
 import numpy as np
-from hessian_based.l_bfgs import LimitedMemoryBFGS
+try:
+    from .l_bfgs import LimitedMemoryBFGS
+except ImportError:
+    from l_bfgs import LimitedMemoryBFGS
 from typing import List
 import logging
 logger = logging.getLogger(__name__)

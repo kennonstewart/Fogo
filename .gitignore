@@ -4,3 +4,6 @@ sandbox/
 src/fogo.egg-info/
 *.egg-info/
 __pycache__/
+logs/
+*.log
+*.jsonl
